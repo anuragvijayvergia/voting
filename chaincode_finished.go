@@ -140,10 +140,12 @@ func (t *SimpleChaincode) createPoll(stub shim.ChaincodeStubInterface, args []st
 		fmt.Println("error 4th args")
 		return nil, errors.New("4th Argument i.e max votes must be numeric string")
 	}
+	//var options []string
+	  
 	newPoll.isOpen = true
-	// for i := 4; i < len(args); i++ {
-	// 	newPoll.options = append(options, args[i])
-	// }
+	for i := 4; i < len(args); i++ {
+		newPoll.options = append(newPoll.options, args[i])
+	}
 	newPoll.owner = usernameStr
 	fmt.Println("created poll object ")
 
