@@ -151,7 +151,7 @@ func (t *SimpleChaincode) createPoll(stub shim.ChaincodeStubInterface, args []st
 
 	newPollAsByte, _ := json.Marshal(newPoll)
 	fmt.Println("storing data")
-	err = stub.PutState(id, newPollAsByte)
+	err = stub.PutState("90", newPollAsByte)
 	if err != nil {
 		fmt.Println("error while storing data")
 		return nil, err
@@ -169,7 +169,7 @@ func (t *SimpleChaincode) read(stub shim.ChaincodeStubInterface, args []string) 
 	}
 
 	key = args[0]
-	valAsbytes, err := stub.GetState(key)
+	valAsbytes, err := stub.GetState("90")
 	if err != nil {
 		jsonResp = "{\"Error\":\"Failed to get state for " + key + "\"}"
 		return nil, errors.New(jsonResp)
@@ -189,7 +189,7 @@ func (t *SimpleChaincode) vote(stub shim.ChaincodeStubInterface, args []string) 
 	// }
 	usernameStr := "admin"
 	id := args[0]
-	pollAsByte, err := stub.GetState(id)
+	pollAsByte, err := stub.GetState("90")
 	if err != nil {
 		return nil, errors.New("Failed to get poll with id as " + id)
 	}
@@ -217,7 +217,7 @@ func (t *SimpleChaincode) vote(stub shim.ChaincodeStubInterface, args []string) 
 
 	res.votes = append(res.votes, newVote)
 	pollAsByte, _ = json.Marshal(res)
-	err = stub.PutState(id, pollAsByte)
+	err = stub.PutState("90", pollAsByte)
 	if err != nil {
 		return nil, err
 	}
