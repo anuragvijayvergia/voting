@@ -82,6 +82,7 @@ func (t *SimpleChaincode) createPoll(stub shim.ChaincodeStubInterface, args []st
 		return nil, errors.New("Failed to get username")
 	}
 	usernameStr := string(username)
+	fmt.Println("got username: " + usernameStr)
 	if usernameStr != "admin" {
 		return nil, errors.New("Only admin can create poll")
 	}
@@ -91,23 +92,27 @@ func (t *SimpleChaincode) createPoll(stub shim.ChaincodeStubInterface, args []st
 	id := args[0]
 	//check if id already exists
 	pollAsByte, err := stub.GetState(id)
+	fmt.Println("got id as id " + id)
 	if err != nil {
+		fmt.Println("error getting poll id")
 		return nil, errors.New("Failed to get poll with id as " + id)
 	}
 
 	res := Poll{}
 	json.Unmarshal(pollAsByte, &res)
 	if res.id == id {
+		fmt.Println("error id exisit")
 		return nil, errors.New("Id already exisit")
 	}
 	//str := `{"id":"` + id + `","title":"` + title + `","question":"` + question + `","isOpen":"` + isOpen + `","maxVotes":"` + maxVotes + `","options":"` + options + `","votes":"` + votes + `","owner":"` + username + `"}`
-
+	fmt.Println("creating poll object")
 	newPoll := Poll{}
 	newPoll.id = id
 	newPoll.title = args[1]
 	newPoll.question = args[2]
 	newPoll.maxVotes, err = strconv.Atoi(args[3])
 	if err != nil {
+		fmt.Println("error 4th args")
 		return nil, errors.New("4th Argument i.e max votes must be numeric string")
 	}
 	newPoll.isOpen = true
@@ -115,13 +120,16 @@ func (t *SimpleChaincode) createPoll(stub shim.ChaincodeStubInterface, args []st
 	// 	newPoll.options = append(options, args[i])
 	// }
 	newPoll.owner = usernameStr
+	fmt.Println("created poll object ")
 
 	newPollAsByte, _ := json.Marshal(newPoll)
-
+	fmt.Println("storing data")
 	err = stub.PutState(id, newPollAsByte)
 	if err != nil {
+		fmt.Println("error while storing data")
 		return nil, err
 	}
+	fmt.Println("No Error")
 	return nil, nil
 }
 
