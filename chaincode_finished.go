@@ -178,7 +178,7 @@ func (t *SimpleChaincode) vote(stub shim.ChaincodeStubInterface, args []string) 
 	res := Poll{}
 	json.Unmarshal(pollAsByte, &res)
 	if res.id != id {
-		return nil, errors.New("Poll id not found")
+		return nil, errors.New("Poll id not found "+res.id)
 	}
 	if res.isOpen == false {
 		return nil, errors.New("Poll ended")
