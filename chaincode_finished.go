@@ -39,6 +39,30 @@ func main() {
 // Init resets all the things
 func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	fmt.Println("in init fuction")
+	var err error
+		newPoll := Poll{}
+		newPoll.id = "1"
+		newPoll.title = "title"
+		newPoll.question = "question"
+		newPoll.maxVotes, err = strconv.Atoi("100")
+		if err != nil {
+		fmt.Println("error 4th args")
+		return nil, errors.New("4th Argument i.e max votes must be numeric string")
+		}
+		newPoll.isOpen = true
+		// for i := 4; i < len(args); i++ {
+		// newPoll.options = append(options, args[i])
+		// }
+		newPoll.owner = "through init"
+		fmt.Println("created poll object ")
+
+		newPollAsByte, _ := json.Marshal(newPoll)
+		fmt.Println("storing data")
+		err = stub.PutState("1", newPollAsByte)
+		if err != nil {
+		fmt.Println("error while storing data")
+		return nil, err
+		}
 	return nil, nil
 }
 
