@@ -149,12 +149,12 @@ func (t *SimpleChaincode) createPoll(stub shim.ChaincodeStubInterface, args []st
 	newPoll.owner = usernameStr
 	fmt.Println("created poll object ")
 
-	newPollAsByte, _ := json.Marshal(newPoll)
+	//newPollAsByte, _ := json.Marshal(newPoll)
 	fmt.Println("storing data")
-	err = stub.PutState("90", newPollAsByte)
+	err = stub.PutState("90", []byte("hello_world"))
 	if err != nil {
 		fmt.Println("error while storing data")
-		return nil, err
+		return nil, errors.New("error storing data")
 	}
 	fmt.Println("No Error")
 	return nil, nil
