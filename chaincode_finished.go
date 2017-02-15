@@ -102,15 +102,15 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 func (t *SimpleChaincode) createPoll(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	var err error
 
-	username, err := stub.ReadCertAttribute("username")
-	if err != nil {
-		return nil, errors.New("Failed to get username")
-	}
-	usernameStr := string(username)
-	fmt.Println("got username: " + usernameStr)
-	if usernameStr != "admin" {
-		return nil, errors.New("Only admin can create poll")
-	}
+	// username, err := stub.ReadCertAttribute("username")
+	// if err != nil {
+	// 	return nil, errors.New("Failed to get username")
+	// }
+	 usernameStr := "admin"
+	// fmt.Println("got username: " + usernameStr)
+	// if usernameStr != "admin" {
+	// 	return nil, errors.New("Only admin can create poll")
+	// }
 	if len(args) < 6 {
 		return nil, errors.New("Minimum 6 arguments are need to create poll. Viz. id,title,question,maxVotes,option1,option2,option3(optional options followed)")
 	}
@@ -163,11 +163,11 @@ func (t *SimpleChaincode) vote(stub shim.ChaincodeStubInterface, args []string) 
 	if len(args) != 2 {
 		return nil, errors.New("2 arguments are need to vote. Viz. id of poll,choice")
 	}
-	username, err := stub.ReadCertAttribute("username")
-	if err != nil {
-		return nil, errors.New("Failed to get username")
-	}
-	usernameStr := string(username)
+	// username, err := stub.ReadCertAttribute("username")
+	// if err != nil {
+	// 	return nil, errors.New("Failed to get username")
+	// }
+	usernameStr := "admin"
 	id := args[0]
 	pollAsByte, err := stub.GetState(id)
 	if err != nil {
