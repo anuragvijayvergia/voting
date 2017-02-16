@@ -66,12 +66,30 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 	// Handle different functions
 	// if function == "getVoteCount" {
 	// 	return t.getVoteCount(stub, args)
-	// } else if function == "getVotes" {
-	// 	return t.getVotes(stub, args)
-	// }
+	// } else
+	if function == "getVotes" {
+		return t.getVotes(stub, args)
+	}
 	fmt.Println("query did not find func: " + function)
 
 	return nil, errors.New("Received unknown function query: " + function)
+}
+
+func (t *SimpleChaincode) getVotes(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+var err error
+if len(args) != 1 {
+return nil, errors.New("1 arguments are need to vote. Viz. id of poll")
+}
+
+id := args[0]
+pollAsByte, err := stub.GetState(id)
+if err != nil {
+return nil, errors.New("Failed to get poll with id as " + id)
+}
+res := Poll{}
+json.Unmarshal(pollAsByte, &res)
+votesB, _ := json.Marshal(res.Votes)
+return votesB, nil
 }
 
 func (t *SimpleChaincode) createPoll(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
