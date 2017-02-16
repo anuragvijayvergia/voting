@@ -14,19 +14,25 @@ type SimpleChaincode struct {
 }
 
 type Poll struct {
-	Id       string   `json:"id"`
-	Title    string   `json:"title"`
-	Question string   `json:"question"`
-	IsOpen   bool     `json:"isOpen"`
-	MaxVotes int      `json:"maxVotes"`
-	Options  []string `json:"options"`
-	Votes    []Vote   `json:"votes"`
-	Owner    string   `json:"owner"`
+	Id       string      `json:"id"`
+	Title    string      `json:"title"`
+	Question string      `json:"question"`
+	IsOpen   bool        `json:"isOpen"`
+	MaxVotes int         `json:"maxVotes"`
+	Options  []string    `json:"options"`
+	Votes    []Vote      `json:"votes"`
+	Owner    string      `json:"owner"`
+	Count    []VoteCount `json:"voteCount"`
 }
 
 type Vote struct {
 	Option string `json:"selectedOption"`
 	User   string `json:"voteBy"`
+}
+
+type VoteCount struct {
+	Option     string `json:"option"`
+	CountTotal int    `json:"count"`
 }
 
 func main() {
@@ -64,32 +70,14 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 	fmt.Println("query is running " + function)
 
 	// Handle different functions
-	// if function == "getVoteCount" {
-	// 	return t.getVoteCount(stub, args)
-	// } else
-	if function == "getVotes" {
+	if function == "getVoteCount" {
+		return t.getVoteCount(stub, args)
+	} else if function == "getVotes" {
 		return t.getVotes(stub, args)
 	}
 	fmt.Println("query did not find func: " + function)
 
 	return nil, errors.New("Received unknown function query: " + function)
-}
-
-func (t *SimpleChaincode) getVotes(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
-var err error
-if len(args) != 1 {
-return nil, errors.New("1 arguments are need to vote. Viz. id of poll")
-}
-
-id := args[0]
-pollAsByte, err := stub.GetState(id)
-if err != nil {
-return nil, errors.New("Failed to get poll with id as " + id)
-}
-res := Poll{}
-json.Unmarshal(pollAsByte, &res)
-votesB, _ := json.Marshal(res.Votes)
-return votesB, nil
 }
 
 func (t *SimpleChaincode) createPoll(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
@@ -130,6 +118,10 @@ func (t *SimpleChaincode) createPoll(stub shim.ChaincodeStubInterface, args []st
 	newPoll.IsOpen = true
 	for i := 4; i < len(args); i++ {
 		newPoll.Options = append(newPoll.Options, args[i])
+		count := VoteCount{
+			Option:     args[i],
+			CountTotal: 0}
+		newPoll.Count = append(newPoll.Count, count)
 	}
 	newPoll.Owner = "admins"
 
@@ -178,6 +170,13 @@ func (t *SimpleChaincode) vote(stub shim.ChaincodeStubInterface, args []string) 
 	newVote.User = usernameStr
 
 	res.Votes = append(res.Votes, newVote)
+
+	for i := 0; i < len(res.Count); i++ {
+		if res.Count[i].Option == args[1] {
+			res.Count[i].CountTotal = res.Count[i].CountTotal + 1
+		}
+	}
+
 	pollAsByte, _ = json.Marshal(res)
 	err = stub.PutState(id, pollAsByte)
 	if err != nil {
@@ -185,4 +184,38 @@ func (t *SimpleChaincode) vote(stub shim.ChaincodeStubInterface, args []string) 
 	}
 
 	return nil, nil
+}
+
+func (t *SimpleChaincode) getVoteCount(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	var err error
+	if len(args) != 1 {
+		return nil, errors.New("1 arguments are need to vote. Viz. id of poll")
+	}
+
+	id := args[0]
+	pollAsByte, err := stub.GetState(id)
+	if err != nil {
+		return nil, errors.New("Failed to get poll with id as " + id)
+	}
+	res := Poll{}
+	json.Unmarshal(pollAsByte, &res)
+	votesB, _ := json.Marshal(res.Count)
+	return votesB, nil
+}
+
+func (t *SimpleChaincode) getVotes(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	var err error
+	if len(args) != 1 {
+		return nil, errors.New("1 arguments are need to vote. Viz. id of poll")
+	}
+
+	id := args[0]
+	pollAsByte, err := stub.GetState(id)
+	if err != nil {
+		return nil, errors.New("Failed to get poll with id as " + id)
+	}
+	res := Poll{}
+	json.Unmarshal(pollAsByte, &res)
+	votesB, _ := json.Marshal(res.Votes)
+	return votesB, nil
 }
