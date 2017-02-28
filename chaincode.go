@@ -14,7 +14,6 @@ type SimpleChaincode struct {
 }
 
 type Poll struct {
-	Id       string      `json:"id"`
 	Title    string      `json:"title"`
 	Question string      `json:"question"`
 	IsOpen   bool        `json:"isOpen"`
@@ -44,7 +43,7 @@ func main() {
 
 // Init resets all the things
 func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
-	return nil, nil
+	return t.createPoll(stub, args)
 }
 
 // Invoke isur entry point to invoke a chaincode function
@@ -54,8 +53,6 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 	// Handle different functions
 	if function == "init" {
 		return t.Init(stub, "init", args)
-	} else if function == "createPoll" {
-		return t.createPoll(stub, args)
 	} else if function == "vote" {
 		return t.vote(stub, args)
 	}
@@ -82,41 +79,19 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 
 func (t *SimpleChaincode) createPoll(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	var err error
-
-	// username, err := stub.ReadCertAttribute("username")
-	// if err != nil {
-	// 	return nil, errors.New("Failed to get username")
-	// }
-	// usernameStr := string(username)
-	// fmt.Println("got username: " + usernameStr)
-	// if usernameStr != "admin" {
-	// 	return nil, errors.New("Only admin can create poll")
-	// }
-	if len(args) < 6 {
-		return nil, errors.New("Minimum 6 arguments are need to create poll. Viz. id,title,question,maxVotes,option1,option2,option3(optional options followed)")
-	}
-	id := args[0]
-	pollAsByte, err := stub.GetState(id)
-	if err != nil {
-		return nil, errors.New("Failed to get poll with id as " + id)
-	}
-
-	res := Poll{}
-	json.Unmarshal(pollAsByte, &res)
-	if res.Id == id {
-		return nil, errors.New("Id already exisit")
+	if len(args) < 5 {
+		return nil, errors.New("Minimum 5 arguments are need to create poll. Viz. title,question,maxVotes,option1,option2,option3(optional options followed)")
 	}
 
 	newPoll := Poll{}
-	newPoll.Id = id
-	newPoll.Title = args[1]
-	newPoll.Question = args[2]
-	newPoll.MaxVotes, err = strconv.Atoi(args[3])
+	newPoll.Title = args[0]
+	newPoll.Question = args[1]
+	newPoll.MaxVotes, err = strconv.Atoi(args[2])
 	if err != nil {
 		return nil, errors.New("4th Argument i.e max votes must be numeric string")
 	}
 	newPoll.IsOpen = true
-	for i := 4; i < len(args); i++ {
+	for i := 3; i < len(args); i++ {
 		newPoll.Options = append(newPoll.Options, args[i])
 		count := VoteCount{
 			Option:     args[i],
@@ -127,7 +102,7 @@ func (t *SimpleChaincode) createPoll(stub shim.ChaincodeStubInterface, args []st
 
 	newPollAsByte, _ := json.Marshal(newPoll)
 
-	err = stub.PutState(id, newPollAsByte)
+	err = stub.PutState("poll", newPollAsByte)
 	if err != nil {
 		return nil, err
 	}
@@ -136,21 +111,18 @@ func (t *SimpleChaincode) createPoll(stub shim.ChaincodeStubInterface, args []st
 
 func (t *SimpleChaincode) vote(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	var err error
-	if len(args) != 2 {
-		return nil, errors.New("2 arguments are need to vote. Viz. id of poll,choice")
+	if len(args) != 1 {
+		return nil, errors.New("2 arguments are need to vote. Viz. choice")
 	}
 
 	usernameStr := "admin"
-	id := args[0]
-	pollAsByte, err := stub.GetState(id)
+	pollAsByte, err := stub.GetState("poll")
 	if err != nil {
-		return nil, errors.New("Failed to get poll with id as " + id)
+		return nil, errors.New("Failed to get poll")
 	}
 	res := Poll{}
 	json.Unmarshal(pollAsByte, &res)
-	if res.Id != id {
-		return nil, errors.New("Poll id not found " + res.Id)
-	}
+
 	if res.IsOpen == false {
 		return nil, errors.New("Poll ended")
 	}
@@ -178,7 +150,7 @@ func (t *SimpleChaincode) vote(stub shim.ChaincodeStubInterface, args []string) 
 	}
 
 	pollAsByte, _ = json.Marshal(res)
-	err = stub.PutState(id, pollAsByte)
+	err = stub.PutState("poll", pollAsByte)
 	if err != nil {
 		return nil, err
 	}
@@ -188,14 +160,9 @@ func (t *SimpleChaincode) vote(stub shim.ChaincodeStubInterface, args []string) 
 
 func (t *SimpleChaincode) getVoteCount(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	var err error
-	if len(args) != 1 {
-		return nil, errors.New("1 arguments are need to vote. Viz. id of poll")
-	}
-
-	id := args[0]
-	pollAsByte, err := stub.GetState(id)
+	pollAsByte, err := stub.GetState("poll")
 	if err != nil {
-		return nil, errors.New("Failed to get poll with id as " + id)
+		return nil, errors.New("Failed to get poll with ")
 	}
 	res := Poll{}
 	json.Unmarshal(pollAsByte, &res)
@@ -205,14 +172,10 @@ func (t *SimpleChaincode) getVoteCount(stub shim.ChaincodeStubInterface, args []
 
 func (t *SimpleChaincode) getVotes(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	var err error
-	if len(args) != 1 {
-		return nil, errors.New("1 arguments are need to vote. Viz. id of poll")
-	}
 
-	id := args[0]
-	pollAsByte, err := stub.GetState(id)
+	pollAsByte, err := stub.GetState("poll")
 	if err != nil {
-		return nil, errors.New("Failed to get poll with id as " + id)
+		return nil, errors.New("Failed to get poll ")
 	}
 	res := Poll{}
 	json.Unmarshal(pollAsByte, &res)
