@@ -112,7 +112,7 @@ func (t *SimpleChaincode) createPoll(stub shim.ChaincodeStubInterface, args []st
 func (t *SimpleChaincode) vote(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	var err error
 	if len(args) != 1 {
-		return nil, errors.New("2 arguments are need to vote. Viz. choice")
+		return nil, errors.New("1 arguments are need to vote. Viz. choice")
 	}
 
 	usernameStr := "admin"
@@ -129,7 +129,7 @@ func (t *SimpleChaincode) vote(stub shim.ChaincodeStubInterface, args []string) 
 
 	isValidOption := false
 	for i := 0; i < len(res.Options); i++ {
-		if res.Options[i] == args[1] {
+		if res.Options[i] == args[0] {
 			isValidOption = true
 		}
 	}
@@ -138,13 +138,13 @@ func (t *SimpleChaincode) vote(stub shim.ChaincodeStubInterface, args []string) 
 	}
 
 	newVote := Vote{}
-	newVote.Option = args[1]
+	newVote.Option = args[0]
 	newVote.User = usernameStr
 
 	res.Votes = append(res.Votes, newVote)
 
 	for i := 0; i < len(res.Count); i++ {
-		if res.Count[i].Option == args[1] {
+		if res.Count[i].Option == args[0] {
 			res.Count[i].CountTotal = res.Count[i].CountTotal + 1
 		}
 	}
